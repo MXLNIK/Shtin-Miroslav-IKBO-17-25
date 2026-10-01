@@ -59,20 +59,29 @@ fi
 
 # Задача 7
 ```bash
+#!/bin/bash
 
+TARGET_DIR="${1:-.}"
+find "$TARGET_DIR" -type f -exec md5sum {} + 2>/dev/null | sort | uniq -w 32 -d --all-repeated=separate
 ```
 
 # Задача 8
 ```bash
+#!/bin/bash
 
+tar -cf "archive.tar" *."$1"
 ```
 
 # Задача 9
 ```bash
+#!/bin/bash
 
+sed 's/    /\t/g' "$1" > "$2"
 ```
 
 # Задача 10
 ```bash
+#!/bin/bash
 
+find "$1" -type f -name "*.txt" -empty
 ```
