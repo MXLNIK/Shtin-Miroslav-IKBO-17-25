@@ -61,7 +61,7 @@ fi
 ```bash
 #!/bin/bash
 
-TARGET_DIR="${1:-.}"
+TARGET_DIR="$1"
 find "$TARGET_DIR" -type f -exec md5sum {} + 2>/dev/null | sort | uniq -w 32 -d --all-repeated=separate
 ```
 
