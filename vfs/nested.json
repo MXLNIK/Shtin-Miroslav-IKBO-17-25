@@ -1,0 +1,30 @@
+{
+  "type": "dir",
+  "children": {
+    "home": {
+      "type": "dir",
+      "children": {
+        "student": {
+          "type": "dir",
+          "children": {
+            "projects": {
+              "type": "dir",
+              "children": {
+                "demo": {
+                  "type": "dir",
+                  "children": {
+                    "main.py": {
+                      "type": "file",
+                      "content": "print('Hello from VFS')",
+                      "encoding": "utf-8"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

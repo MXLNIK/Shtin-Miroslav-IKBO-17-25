@@ -1,3 +1,3 @@
 @echo off
 cd /d "%~dp0.."
-python src\main.py --vfs "test-vfs.json" --script scripts\startup.txt
+python src\main.py --vfs vfs\files.json --script scripts\startup.txt

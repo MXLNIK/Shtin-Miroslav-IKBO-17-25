@@ -1,9 +1,12 @@
-
 import os
 import shlex
 import getpass
 import socket
 import argparse
+try:
+    from .vfs import VFS
+except ImportError:
+    from vfs import VFS
 
 
 def build_prompt():
@@ -30,7 +33,7 @@ def parse_command(command):
     return shlex.split(command)
 
 
-def execute_command(args, config=None):
+def execute_command(args, config=None, vfs=None):
     """Обрабатывает команды"""
     if not args:
         return True
@@ -42,27 +45,56 @@ def execute_command(args, config=None):
         if arguments:
             print("Ошибка: команда exit не принимает аргументы.")
             return True
-
         return False
 
     elif command == "ls":
-        print(f"Команда: ls, аргументы: {arguments}")
+        if len(arguments) > 1:
+            print("Ошибка: ls принимает не более одного аргумента.")
+        elif vfs:
+            path = arguments[0] if arguments else "."
+            vfs.ls(path)
+        else:
+            print("Ошибка: VFS не инициализирована.")
 
     elif command == "cd":
         if len(arguments) > 1:
-            print("Ошибка: команда cd принимает не более одного аргумента.")
+            print("Ошибка: cd принимает не более одного аргумента.")
+        elif vfs:
+            path = arguments[0] if arguments else "/"
+            vfs.cd(path)
         else:
-            print(f"Команда: cd, аргументы: {arguments}")
+            print("Ошибка: VFS не инициализирована.")
+
+    elif command == "pwd":
+        if arguments:
+            print("Ошибка: pwd не принимает аргументы.")
+        elif vfs:
+            print(vfs.current_path)
+
+    elif command == "cat":
+        if len(arguments) != 1:
+            print("Ошибка: cat требует один путь к файлу.")
+        elif vfs:
+            content = vfs.read_file(arguments[0])
+            if content is not None:
+                if isinstance(content, bytes):
+                    print(content.hex())
+                else:
+                    print(content)
 
     elif command == "conf-dump":
         if arguments:
             print("Ошибка: команда conf-dump не принимает аргументы.")
         else:
-            if config is None:
-                config = {}
-
-            for key, value in config.items():
+            for key, value in (config or {}).items():
                 print(f"{key}={value}")
+
+    elif command == "vfs-init":
+        if arguments:
+            print("Ошибка: vfs-init не принимает аргументы.")
+        elif vfs:
+            vfs.init_default()
+            print("VFS сброшена к состоянию по умолчанию.")
 
     else:
         print(f"Ошибка: неизвестная команда '{command}'.")
@@ -70,7 +102,7 @@ def execute_command(args, config=None):
     return True
 
 
-def run_script(script_path, config):
+def run_script(script_path, config, vfs):
     """Выполняет команды из текстового скрипта"""
     try:
         with open(script_path, "r", encoding="utf-8") as file:
@@ -84,7 +116,7 @@ def run_script(script_path, config):
 
                 try:
                     args = parse_command(line)
-                    if not execute_command(args, config):
+                    if not execute_command(args, config, vfs):
                         break
                 except ValueError as error:
                     print(f"Ошибка разбора команды: {error}")
@@ -93,7 +125,7 @@ def run_script(script_path, config):
         print(f"Ошибка открытия скрипта: {error}")
 
 
-def run_repl(config):
+def run_repl(config, vfs):
     """Запускает цикл REPL"""
     print("Эмулятор командной оболочки. Введите exit для выхода.")
 
@@ -102,7 +134,7 @@ def run_repl(config):
             command = input(build_prompt())
             args = parse_command(command)
 
-            if not execute_command(args, config):
+            if not execute_command(args, config, vfs):
                 break
 
         except ValueError as error:
@@ -125,7 +157,7 @@ def main():
     parser.add_argument(
         "--vfs",
         default=None,
-        help="Путь к физическому расположению VFS"
+        help="Путь к JSON-файлу виртуальной файловой системы"
     )
 
     parser.add_argument(
@@ -145,10 +177,12 @@ def main():
     for key, value in config.items():
         print(f"{key}={value}")
 
+    vfs = VFS(args.vfs)
+
     if args.script:
-        run_script(args.script, config)
+        run_script(args.script, config, vfs)
     else:
-        run_repl(config)
+        run_repl(config, vfs)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,10 @@
+{
+  "type": "dir",
+  "children": {
+    "hello.txt": {
+      "type": "file",
+      "content": "Hello, VFS!",
+      "encoding": "utf-8"
+    }
+  }
+}

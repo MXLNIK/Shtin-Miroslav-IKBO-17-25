@@ -1,0 +1,25 @@
+{
+  "type": "dir",
+  "children": {
+    "hello.txt": {
+      "type": "file",
+      "content": "Hello!",
+      "encoding": "utf-8"
+    },
+    "notes.txt": {
+      "type": "file",
+      "content": "My notes",
+      "encoding": "utf-8"
+    },
+    "docs": {
+      "type": "dir",
+      "children": {
+        "readme.txt": {
+          "type": "file",
+          "content": "Virtual documentation",
+          "encoding": "utf-8"
+        }
+      }
+    }
+  }
+}
