@@ -1,19 +1,29 @@
-# Проверка команд первого этапа
-ls
-ls documents
-cd ..
-cd one two
-unknown
-
-# Проверка переменной окружения
-ls $HOME
-
-# Проверка конфигурации
+# Конфигурация
 conf-dump
-conf-dump extra
 
-# Проверка ошибки разбора
+# Работа с каталогами и файлами
+pwd
+ls
+cat hello.txt
+cd home
+pwd
+ls
+cd /
+cd missing
+
+# Обработка ошибок
+unknown
+cd one two
+cat missing.txt
+conf-dump extra
 ls "broken
 
-# Выполнение продолжается после ошибок
-ls final_folder
+# Сброс VFS
+vfs-init
+pwd
+ls
+
+# Проверка продолжения после ошибок
+ls home
+exit
+ls

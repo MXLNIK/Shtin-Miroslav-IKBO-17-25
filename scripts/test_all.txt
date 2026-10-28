@@ -1,0 +1,16 @@
+conf-dump
+pwd
+ls
+cd home
+cd student
+cd projects
+cd demo
+pwd
+ls
+cat main.py
+cd /
+ls missing
+unknown
+vfs-init
+pwd
+ls

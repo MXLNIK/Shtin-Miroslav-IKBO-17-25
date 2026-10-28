@@ -1,10 +1,10 @@
-
 import unittest
 import os
 from io import StringIO
 from contextlib import redirect_stdout
 
 from src.main import parse_command, execute_command, run_script
+from src.vfs import VFS
 
 
 class TestREPL(unittest.TestCase):
@@ -24,7 +24,7 @@ class TestREPL(unittest.TestCase):
         output = StringIO()
 
         with redirect_stdout(output):
-            execute_command(["ls", "folder"])
+            execute_command(["ls", "folder"], vfs=VFS())
 
         self.assertIn("ls", output.getvalue())
         self.assertIn("folder", output.getvalue())
@@ -94,7 +94,7 @@ class TestREPL(unittest.TestCase):
             output = StringIO()
 
             with redirect_stdout(output):
-                run_script(script_path, config)
+                run_script(script_path, config, VFS())
 
             result = output.getvalue()
 
@@ -102,6 +102,78 @@ class TestREPL(unittest.TestCase):
             self.assertIn("final_folder", result)
         finally:
             os.remove(script_path)
+
+    def test_vfs_default(self):
+        vfs = VFS()
+
+        self.assertEqual(vfs.current_path, "/")
+        self.assertIsNotNone(vfs.get_node("hello.txt"))
+
+    def test_vfs_load_json(self):
+        vfs = VFS("vfs/files.json")
+
+        self.assertIsNotNone(vfs.get_node("hello.txt"))
+        self.assertIsNotNone(vfs.get_node("docs/readme.txt"))
+
+    def test_vfs_cd(self):
+        vfs = VFS("vfs/nested.json")
+
+        vfs.cd("/home/student/projects/demo")
+
+        self.assertEqual(vfs.current_path, "/home/student/projects/demo")
+        self.assertIsNotNone(vfs.get_node("main.py"))
+
+    def test_vfs_parent_directory(self):
+        vfs = VFS("vfs/nested.json")
+
+        vfs.cd("/home/student")
+        vfs.cd("..")
+
+        self.assertEqual(vfs.current_path, "/home")
+
+    def test_vfs_init(self):
+        vfs = VFS("vfs/files.json")
+
+        vfs.cd("/docs")
+        vfs.init_default()
+
+        self.assertEqual(vfs.current_path, "/")
+        self.assertIsNotNone(vfs.get_node("hello.txt"))
+        self.assertIsNone(vfs.get_node("docs"))
+
+    def test_vfs_binary_file(self):
+        import tempfile
+        import json
+
+        data = {
+            "type": "dir",
+            "children": {
+                "binary.bin": {
+                    "type": "file",
+                    "content": "AAEC/w==",
+                    "encoding": "base64"
+                }
+            }
+        }
+
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            suffix=".json",
+            delete=False
+        ) as file:
+            json.dump(data, file)
+            path = file.name
+
+        try:
+            vfs = VFS(path)
+            self.assertEqual(
+                vfs.read_file("binary.bin"),
+                bytes([0, 1, 2, 255])
+            )
+        finally:
+            os.remove(path)
+
 
 
 if __name__ == "__main__":
