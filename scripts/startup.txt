@@ -1,0 +1,19 @@
+# Проверка команд первого этапа
+ls
+ls documents
+cd ..
+cd one two
+unknown
+
+# Проверка переменной окружения
+ls $HOME
+
+# Проверка конфигурации
+conf-dump
+conf-dump extra
+
+# Проверка ошибки разбора
+ls "broken
+
+# Выполнение продолжается после ошибок
+ls final_folder
