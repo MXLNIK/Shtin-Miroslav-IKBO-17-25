@@ -4,7 +4,7 @@ import os
 from io import StringIO
 from contextlib import redirect_stdout
 
-from src.main import parse_command, execute_command
+from src.main import parse_command, execute_command, run_script
 
 
 class TestREPL(unittest.TestCase):
@@ -56,6 +56,52 @@ class TestREPL(unittest.TestCase):
             execute_command(["cd", "one", "two"])
 
         self.assertIn("не более одного аргумента", output.getvalue())
+    
+    def test_conf_dump(self):
+        output = StringIO()
+        config = {"vfs": "test.json", "script": "startup.txt"}
+
+        with redirect_stdout(output):
+            execute_command(["conf-dump"], config)
+
+        self.assertIn("vfs=test.json", output.getvalue())
+        self.assertIn("script=startup.txt", output.getvalue())
+
+    def test_conf_dump_with_arguments(self):
+        output = StringIO()
+
+        with redirect_stdout(output):
+            execute_command(["conf-dump", "extra"], {})
+
+        self.assertIn("не принимает аргументы", output.getvalue())
+
+    def test_script_continues_after_error(self):
+        import tempfile
+
+        config = {"vfs": None, "script": None}
+
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            suffix=".txt",
+            delete=False
+        ) as file:
+            file.write("unknown_command\n")
+            file.write("ls final_folder\n")
+            script_path = file.name
+
+        try:
+            output = StringIO()
+
+            with redirect_stdout(output):
+                run_script(script_path, config)
+
+            result = output.getvalue()
+
+            self.assertIn("неизвестная команда", result)
+            self.assertIn("final_folder", result)
+        finally:
+            os.remove(script_path)
 
 
 if __name__ == "__main__":
