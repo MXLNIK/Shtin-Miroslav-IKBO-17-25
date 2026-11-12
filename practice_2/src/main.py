@@ -1,5 +1,13 @@
+import xml.etree.ElementTree as ET
+
 from src.config import load_config, validate_config
 from src.repository import get_dependencies
+from src.graph import (
+    load_test_repository,
+    validate_graph,
+    get_test_dependencies,
+    build_graph
+)
 
 
 def print_config(config):
@@ -10,6 +18,14 @@ def print_config(config):
         print(f"{key} = {value}")
 
 
+def print_dependencies(dependencies):
+    """Выводит список зависимостей"""
+    print("\nПрямые зависимости:")
+
+    for dependency in dependencies:
+        print(dependency)
+
+
 def main():
     """Запускает приложение"""
     try:
@@ -17,21 +33,36 @@ def main():
         validate_config(config)
         print_config(config)
 
-        if config["test_mode"].lower() == "false":
+        if config["test_mode"].lower() == "true":
+            graph = load_test_repository(config["test_repository"])
+            validate_graph(graph)
+            package = config["package_name"]
+
+            dependencies = get_test_dependencies(graph, package)
+        else:
+            package = config["package_name"]
             dependencies = get_dependencies(
-                config["repository_url"],
-                config["package_name"]
+                config["repository_url"], package
             )
+            graph = {package: dependencies}
 
-            print("\nПрямые зависимости:")
+        print_dependencies(dependencies)
 
-            for dependency in dependencies:
-                print(dependency)
+        result = build_graph(
+            graph,
+            package,
+            int(config["max_depth"]),
+            config["filter_substring"]
+        )
+
+        print("\nГраф зависимостей:")
+
+        for name, items in result.items():
+            print(f"{name} -> {', '.join(items)}")
 
     except (ValueError, FileNotFoundError, OSError, ET.ParseError) as error:
         print(f"Ошибка: {error}")
 
 
 if __name__ == "__main__":
-    import xml.etree.ElementTree as ET
     main()
