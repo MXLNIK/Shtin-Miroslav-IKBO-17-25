@@ -5,9 +5,10 @@ from src.config import validate_config
 class TestConfig(unittest.TestCase):
     """Тестирует проверку конфигурации"""
 
-    def setUp(self):
+    @staticmethod
+    def create_config():
         """Создает тестовую конфигурацию"""
-        self.config = {
+        return {
             "package_name": "org.example:demo:1.0",
             "repository_url": "https://repo1.maven.org/maven2",
             "test_repository": "test_repository.json",
@@ -19,35 +20,40 @@ class TestConfig(unittest.TestCase):
 
     def test_valid_config(self):
         """Проверяет правильную конфигурацию"""
-        self.assertTrue(validate_config(self.config))
+        config = self.create_config()
+        self.assertTrue(validate_config(config))
 
     def test_invalid_depth(self):
         """Проверяет неправильную глубину"""
-        self.config["max_depth"] = "-1"
+        config = self.create_config()
+        config["max_depth"] = "-1"
 
         with self.assertRaises(ValueError):
-            validate_config(self.config)
+            validate_config(config)
 
     def test_invalid_package(self):
         """Проверяет неправильное имя пакета"""
-        self.config["package_name"] = "demo"
+        config = self.create_config()
+        config["package_name"] = "demo"
 
         with self.assertRaises(ValueError):
-            validate_config(self.config)
+            validate_config(config)
 
     def test_invalid_mode(self):
         """Проверяет неправильный режим"""
-        self.config["test_mode"] = "maybe"
+        config = self.create_config()
+        config["test_mode"] = "maybe"
 
         with self.assertRaises(ValueError):
-            validate_config(self.config)
+            validate_config(config)
 
     def test_invalid_output(self):
         """Проверяет неправильный формат результата"""
-        self.config["output_file"] = "graph.txt"
+        config = self.create_config()
+        config["output_file"] = "graph.txt"
 
         with self.assertRaises(ValueError):
-            validate_config(self.config)
+            validate_config(config)
 
 
 if __name__ == "__main__":
