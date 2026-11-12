@@ -46,7 +46,8 @@ def get_levels(graph):
                 queue.append((dependency, depth + 1))
 
     for package in nodes - visited:
-        levels.setdefault(max(levels.keys(), default=-1) + 1, []).append(package)
+        levels.setdefault(max(levels.keys(), 
+                              default=-1) + 1, []).append(package)
 
     return levels
 

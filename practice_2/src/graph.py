@@ -53,13 +53,10 @@ def build_graph(graph, package, max_depth, filter_substring):
         """Рекурсивно обрабатывает очередь BFS"""
         if not queue:
             return
-
         current, depth = queue.pop(0)
-
         if current in visited:
             bfs(queue)
             return
-
         visited.add(current)
 
         dependencies = graph.get(current, [])
@@ -72,7 +69,6 @@ def build_graph(graph, package, max_depth, filter_substring):
 
         if depth < max_depth:
             result[current] = dependencies
-
             for dependency in dependencies:
                 if dependency not in visited:
                     queue.append((dependency, depth + 1))

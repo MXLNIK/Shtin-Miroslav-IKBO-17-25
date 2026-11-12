@@ -1,4 +1,3 @@
-
 import unittest
 from src.graph import build_graph, validate_graph
 

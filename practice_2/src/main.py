@@ -35,7 +35,6 @@ def main():
         config = load_config()
         validate_config(config)
         print_config(config)
-
         package = config["package_name"]
 
         if config["test_mode"].lower() == "true":
@@ -49,11 +48,9 @@ def main():
                 int(config["max_depth"]),
                 config["filter_substring"]
             )
-
             dependencies = graph.get(package, [])
 
         print_dependencies(dependencies)
-
         result = build_graph(
             graph,
             package,
@@ -62,17 +59,13 @@ def main():
         )
 
         print("\nПорядок загрузки:")
-
         for number, name in enumerate(get_load_order(result, package), 1):
             print(f"{number}. {name}")
-
         mermaid = generate_mermaid(result)
         print("\nMermaid:")
         print(mermaid)
-
         generate_svg(result, config["output_file"])
         print(f"\nSVG сохранен: {config['output_file']}")
-
     except (ValueError, FileNotFoundError, OSError, ET.ParseError) as error:
         print(f"Ошибка: {error}")
 

@@ -12,9 +12,10 @@ PROPERTY_PATTERN = re.compile(r"\$\{([^}]+)\}")
 
 def build_pom_url(repository_url, package_name):
     """Формирует URL POM-файла Maven"""
+    expected_parts_count = 3
     parts = package_name.split(":")
 
-    if len(parts) != 3:
+    if len(parts) != expected_parts_count:
         raise ValueError("Ожидается формат group:artifact:version")
 
     group, artifact, version = parts
@@ -216,10 +217,50 @@ def get_dependencies(repository_url, package_name):
     return extract_dependencies(root, properties, managed)
 
 
-def get_maven_graph(repository_url, package_name, max_depth, filter_substring):
-    """Строит граф Maven-зависимостей"""
+def validate_depth(max_depth):
+    """Проверяет корректность максимальной глубины"""
     if max_depth < 0:
         raise ValueError("Глубина не может быть отрицательной")
+
+
+def filter_dependencies(dependencies, filter_substring):
+    """Фильтрует зависимости по подстроке"""
+    if not filter_substring:
+        return dependencies
+
+    return [
+        item for item in dependencies
+        if filter_substring not in item
+    ]
+
+
+def get_package_dependencies(repository_url, package_name, filter_substring):
+    """Получает и фильтрует зависимости пакета"""
+    dependencies = get_dependencies(repository_url, package_name)
+
+    return filter_dependencies(dependencies, filter_substring)
+
+
+def process_package(repository_url, current, depth, max_depth,
+                    filter_substring, graph, queue, visited):
+    """Обрабатывает один пакет и добавляет его зависимости в очередь"""
+    dependencies = get_package_dependencies(
+        repository_url, current, filter_substring
+    )
+
+    if depth < max_depth:
+        graph[current] = dependencies
+
+        for dependency in dependencies:
+            if dependency not in visited:
+                queue.append((dependency, depth + 1))
+    else:
+        graph[current] = []
+
+
+def get_maven_graph(repository_url, package_name, max_depth, filter_substring):
+    """Строит граф Maven-зависимостей"""
+    validate_depth(max_depth)
 
     graph = {}
     visited = set()
@@ -232,19 +273,16 @@ def get_maven_graph(repository_url, package_name, max_depth, filter_substring):
             continue
 
         visited.add(current)
-        dependencies = get_dependencies(repository_url, current)
 
-        if filter_substring:
-            dependencies = [
-                item for item in dependencies
-                if filter_substring not in item
-            ]
-
-        graph[current] = dependencies if depth < max_depth else []
-
-        if depth < max_depth:
-            for dependency in dependencies:
-                if dependency not in visited:
-                    queue.append((dependency, depth + 1))
+        process_package(
+            repository_url,
+            current,
+            depth,
+            max_depth,
+            filter_substring,
+            graph,
+            queue,
+            visited
+        )
 
     return graph
