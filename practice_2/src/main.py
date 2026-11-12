@@ -1,4 +1,4 @@
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as element_tree
 
 from src.config import load_config, validate_config
 from src.repository import get_dependencies
@@ -66,7 +66,7 @@ def main():
         print(mermaid)
         generate_svg(result, config["output_file"])
         print(f"\nSVG сохранен: {config['output_file']}")
-    except (ValueError, FileNotFoundError, OSError, ET.ParseError) as error:
+    except (ValueError, FileNotFoundError, OSError, element_tree.ParseError) as error:
         print(f"Ошибка: {error}")
 
 

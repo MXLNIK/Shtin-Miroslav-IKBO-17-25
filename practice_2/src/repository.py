@@ -1,6 +1,6 @@
 import re
 import urllib.request
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as element_tree
 
 
 MAVEN_NAMESPACE = "http://maven.apache.org/POM/4.0.0"
@@ -131,7 +131,7 @@ def load_pom_context(repository_url, package_name, visited=None):
 
     visited.add(package_name)
     url = build_pom_url(repository_url, package_name)
-    root = ET.fromstring(download_pom(url))
+    root = element_tree.fromstring(download_pom(url))
 
     properties = {}
     managed = {}
@@ -156,7 +156,7 @@ def load_pom_context(repository_url, package_name, visited=None):
 
 def parse_dependencies(xml_content):
     """Извлекает зависимости с явно указанными версиями"""
-    root = ET.fromstring(xml_content)
+    root = element_tree.fromstring(xml_content)
     dependencies = find_element(root, "dependencies")
     result = []
 
@@ -209,7 +209,7 @@ def extract_dependencies(root, properties, managed):
 def get_dependencies(repository_url, package_name):
     """Получает зависимости пакета из Maven-репозитория"""
     url = build_pom_url(repository_url, package_name)
-    root = ET.fromstring(download_pom(url))
+    root = element_tree.fromstring(download_pom(url))
     properties, managed = load_pom_context(
         repository_url, package_name
     )
