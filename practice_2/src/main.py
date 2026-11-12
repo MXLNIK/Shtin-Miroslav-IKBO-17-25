@@ -66,7 +66,8 @@ def main():
         print(mermaid)
         generate_svg(result, config["output_file"])
         print(f"\nSVG сохранен: {config['output_file']}")
-    except (ValueError, FileNotFoundError, OSError, element_tree.ParseError) as error:
+    except (ValueError, FileNotFoundError,
+            OSError, element_tree.ParseError) as error:
         print(f"Ошибка: {error}")
 
 
