@@ -241,48 +241,49 @@ def get_package_dependencies(repository_url, package_name, filter_substring):
     return filter_dependencies(dependencies, filter_substring)
 
 
-def process_package(repository_url, current, depth, max_depth,
-                    filter_substring, graph, queue, visited):
-    """Обрабатывает один пакет и добавляет его зависимости в очередь"""
+def process_package(repository_url, current, depth, context):
+    """Обрабатывает пакет и добавляет его зависимости в очередь"""
     dependencies = get_package_dependencies(
-        repository_url, current, filter_substring
+        repository_url,
+        current,
+        context["filter_substring"]
     )
 
-    if depth < max_depth:
-        graph[current] = dependencies
+    if depth < context["max_depth"]:
+        context["graph"][current] = dependencies
 
         for dependency in dependencies:
-            if dependency not in visited:
-                queue.append((dependency, depth + 1))
+            if dependency not in context["visited"]:
+                context["queue"].append((dependency, depth + 1))
     else:
-        graph[current] = []
+        context["graph"][current] = []
 
 
 def get_maven_graph(repository_url, package_name, max_depth, filter_substring):
     """Строит граф Maven-зависимостей"""
     validate_depth(max_depth)
 
-    graph = {}
-    visited = set()
-    queue = [(package_name, 0)]
+    context = {
+        "max_depth": max_depth,
+        "filter_substring": filter_substring,
+        "graph": {},
+        "visited": set(),
+        "queue": [(package_name, 0)]
+    }
 
-    while queue:
-        current, depth = queue.pop(0)
+    while context["queue"]:
+        current, depth = context["queue"].pop(0)
 
-        if current in visited:
+        if current in context["visited"]:
             continue
 
-        visited.add(current)
+        context["visited"].add(current)
 
         process_package(
             repository_url,
             current,
             depth,
-            max_depth,
-            filter_substring,
-            graph,
-            queue,
-            visited
+            context
         )
 
-    return graph
+    return context["graph"]
