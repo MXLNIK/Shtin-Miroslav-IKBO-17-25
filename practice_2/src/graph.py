@@ -1,3 +1,4 @@
+
 import json
 from pathlib import Path
 
@@ -20,23 +21,23 @@ def validate_graph(graph):
 
     for package, dependencies in graph.items():
         if not package.isalpha() or not package.isupper():
-            raise ValueError("Имена пакетов должны быть большими латинскими буквами")
+            raise ValueError("Некорректное имя пакета")
 
         if not isinstance(dependencies, list):
             raise ValueError("Зависимости должны быть списками")
 
         for dependency in dependencies:
             if not isinstance(dependency, str):
-                raise ValueError("Некорректное имя зависимости")
+                raise ValueError("Некорректная зависимость")
 
             if not dependency.isalpha() or not dependency.isupper():
-                raise ValueError("Некорректное имя пакета")
+                raise ValueError("Некорректное имя зависимости")
 
     return True
 
 
 def get_test_dependencies(graph, package):
-    """Получает прямые зависимости тестового пакета"""
+    """Получает прямые зависимости пакета"""
     if package not in graph:
         raise ValueError(f"Пакет {package} отсутствует")
 
@@ -61,24 +62,28 @@ def build_graph(graph, package, max_depth, filter_substring):
 
         visited.add(current)
 
-        if depth >= max_depth:
-            result[current] = []
-            bfs(queue)
-            return
-
         dependencies = graph.get(current, [])
-        dependencies = [
-            item for item in dependencies
-            if filter_substring not in item
-        ]
 
-        result[current] = dependencies
+        if filter_substring:
+            dependencies = [
+                item for item in dependencies
+                if filter_substring not in item
+            ]
 
-        for dependency in dependencies:
-            if dependency not in visited:
-                queue.append((dependency, depth + 1))
+        if depth < max_depth:
+            result[current] = dependencies
+
+            for dependency in dependencies:
+                if dependency not in visited:
+                    queue.append((dependency, depth + 1))
+        else:
+            result[current] = []
 
         bfs(queue)
 
+    if max_depth < 0:
+        raise ValueError("Глубина не может быть отрицательной")
+
     bfs([(package, 0)])
+
     return result

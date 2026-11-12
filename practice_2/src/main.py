@@ -9,6 +9,8 @@ from src.graph import (
     build_graph
 )
 from src.ordering import get_load_order
+from src.visualization import generate_mermaid, generate_svg
+from src.repository import get_maven_graph
 
 
 def print_config(config):
@@ -20,7 +22,7 @@ def print_config(config):
 
 
 def print_dependencies(dependencies):
-    """Выводит список зависимостей"""
+    """Выводит список зависимостей."""
     print("\nПрямые зависимости:")
 
     for dependency in dependencies:
@@ -41,10 +43,14 @@ def main():
             validate_graph(graph)
             dependencies = get_test_dependencies(graph, package)
         else:
-            dependencies = get_dependencies(
-                config["repository_url"], package
+            graph = get_maven_graph(
+                config["repository_url"],
+                package,
+                int(config["max_depth"]),
+                config["filter_substring"]
             )
-            graph = {package: dependencies}
+
+            dependencies = graph.get(package, [])
 
         print_dependencies(dependencies)
 
@@ -55,15 +61,17 @@ def main():
             config["filter_substring"]
         )
 
-        print("\nГраф зависимостей:")
-
-        for name, items in result.items():
-            print(f"{name} -> {', '.join(items)}")
-
         print("\nПорядок загрузки:")
 
         for number, name in enumerate(get_load_order(result, package), 1):
             print(f"{number}. {name}")
+
+        mermaid = generate_mermaid(result)
+        print("\nMermaid:")
+        print(mermaid)
+
+        generate_svg(result, config["output_file"])
+        print(f"\nSVG сохранен: {config['output_file']}")
 
     except (ValueError, FileNotFoundError, OSError, ET.ParseError) as error:
         print(f"Ошибка: {error}")
