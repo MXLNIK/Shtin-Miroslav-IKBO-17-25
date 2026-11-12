@@ -46,41 +46,51 @@ class VFS:
             self.root = default_vfs()
             self.current_path = "/"
 
+    
     def valid_directory(self, node):
-        if not isinstance(node, dict):
-            return False
-
-        if node.get("type") != "dir":
+        """Проверяет корректность структуры директории."""
+        if not isinstance(node, dict) or node.get("type") != "dir":
             return False
 
         children = node.get("children")
-
         if not isinstance(children, dict):
             return False
 
-        for name, child in children.items():
-            if not isinstance(name, str) or name in ("", ".", ".."):
-                return False
+        return all(
+            self._valid_child(name, child)
+            for name, child in children.items()
+        )
 
-            if "/" in name or "\\" in name:
-                return False
 
-            if not isinstance(child, dict):
-                return False
+    def _valid_child(self, name, child):
+        """Проверяет корректность отдельного элемента директории."""
+        if not isinstance(name, str) or name in ("", ".", ".."):
+            return False
 
-            if child.get("type") == "dir":
-                if not self.valid_directory(child):
-                    return False
-            elif child.get("type") == "file":
-                if not isinstance(child.get("content", ""), str):
-                    return False
+        if "/" in name or "\\" in name:
+            return False
 
-                if child.get("encoding", "utf-8") not in ("utf-8", "base64"):
-                    return False
-            else:
-                return False
+        if not isinstance(child, dict):
+            return False
 
-        return True
+        node_type = child.get("type")
+
+        if node_type == "dir":
+            return self.valid_directory(child)
+
+        if node_type == "file":
+            return self._valid_file(child)
+
+        return False
+
+
+    def _valid_file(self, node):
+        """Проверяет корректность файла."""
+        return (
+            isinstance(node.get("content", ""), str)
+            and node.get("encoding", "utf-8") in ("utf-8", "base64")
+        )
+
 
     def get_node(self, path):
         if path.startswith("/"):

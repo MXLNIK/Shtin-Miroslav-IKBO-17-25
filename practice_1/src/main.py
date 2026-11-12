@@ -34,71 +34,80 @@ def parse_command(command):
 
 
 def execute_command(args, config=None, vfs=None):
-    """Обрабатывает команды"""
+    """Обрабатывает команды."""
     if not args:
         return True
 
-    command = args[0]
-    arguments = args[1:]
+    command, *arguments = args
 
-    if command == "exit":
-        if arguments:
-            print("Ошибка: команда exit не принимает аргументы.")
-            return True
-        return False
+    handlers = {
+        "exit": lambda: _handle_exit(arguments),
+        "ls": lambda: _handle_vfs(arguments, vfs, "ls", "."),
+        "cd": lambda: _handle_vfs(arguments, vfs, "cd", "/"),
+        "pwd": lambda: _handle_pwd(arguments, vfs),
+        "cat": lambda: _handle_cat(arguments, vfs),
+        "conf-dump": lambda: _handle_conf_dump(arguments, config),
+        "vfs-init": lambda: _handle_vfs_init(arguments, vfs),
+    }
 
-    elif command == "ls":
-        if len(arguments) > 1:
-            print("Ошибка: ls принимает не более одного аргумента.")
-        elif vfs:
-            path = arguments[0] if arguments else "."
-            vfs.ls(path)
-        else:
-            print("Ошибка: VFS не инициализирована.")
-
-    elif command == "cd":
-        if len(arguments) > 1:
-            print("Ошибка: cd принимает не более одного аргумента.")
-        elif vfs:
-            path = arguments[0] if arguments else "/"
-            vfs.cd(path)
-        else:
-            print("Ошибка: VFS не инициализирована.")
-
-    elif command == "pwd":
-        if arguments:
-            print("Ошибка: pwd не принимает аргументы.")
-        elif vfs:
-            print(vfs.current_path)
-
-    elif command == "cat":
-        if len(arguments) != 1:
-            print("Ошибка: cat требует один путь к файлу.")
-        elif vfs:
-            content = vfs.read_file(arguments[0])
-            if content is not None:
-                if isinstance(content, bytes):
-                    print(content.hex())
-                else:
-                    print(content)
-
-    elif command == "conf-dump":
-        if arguments:
-            print("Ошибка: команда conf-dump не принимает аргументы.")
-        else:
-            for key, value in (config or {}).items():
-                print(f"{key}={value}")
-
-    elif command == "vfs-init":
-        if arguments:
-            print("Ошибка: vfs-init не принимает аргументы.")
-        elif vfs:
-            vfs.init_default()
-            print("VFS сброшена к состоянию по умолчанию.")
-
-    else:
+    handler = handlers.get(command)
+    if handler is None:
         print(f"Ошибка: неизвестная команда '{command}'.")
+        return True
 
+    return handler()
+
+
+def _handle_exit(args):
+    if args:
+        print("Ошибка: команда exit не принимает аргументы.")
+        return True
+    return False
+
+
+def _handle_vfs(args, vfs, method, default_path):
+    if len(args) > 1:
+        print(f"Ошибка: {method} принимает не более одного аргумента.")
+    elif vfs is None:
+        print("Ошибка: VFS не инициализирована.")
+    else:
+        getattr(vfs, method)(args[0] if args else default_path)
+    return True
+
+
+def _handle_pwd(args, vfs):
+    if args:
+        print("Ошибка: pwd не принимает аргументы.")
+    elif vfs:
+        print(vfs.current_path)
+    return True
+
+
+def _handle_cat(args, vfs):
+    if len(args) != 1:
+        print("Ошибка: cat требует один путь к файлу.")
+    elif vfs is not None:
+        content = vfs.read_file(args[0])
+        if content is not None:
+            print(content.hex() if isinstance(content, bytes) else content)
+    return True
+
+
+def _handle_conf_dump(args, config):
+    if args:
+        print("Ошибка: команда conf-dump не принимает аргументы.")
+    else:
+        for key, value in (config or {}).items():
+            print(f"{key}={value}")
+    return True
+
+
+def _handle_vfs_init(args, vfs):
+    if args:
+        print("Ошибка: vfs-init не принимает аргументы.")
+    elif vfs is not None:
+        vfs.init_default()
+        print("VFS сброшена к состоянию по умолчанию.")
     return True
 
 
