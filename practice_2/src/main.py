@@ -8,6 +8,7 @@ from src.graph import (
     get_test_dependencies,
     build_graph
 )
+from src.ordering import get_load_order
 
 
 def print_config(config):
@@ -33,14 +34,13 @@ def main():
         validate_config(config)
         print_config(config)
 
+        package = config["package_name"]
+
         if config["test_mode"].lower() == "true":
             graph = load_test_repository(config["test_repository"])
             validate_graph(graph)
-            package = config["package_name"]
-
             dependencies = get_test_dependencies(graph, package)
         else:
-            package = config["package_name"]
             dependencies = get_dependencies(
                 config["repository_url"], package
             )
@@ -59,6 +59,11 @@ def main():
 
         for name, items in result.items():
             print(f"{name} -> {', '.join(items)}")
+
+        print("\nПорядок загрузки:")
+
+        for number, name in enumerate(get_load_order(result, package), 1):
+            print(f"{number}. {name}")
 
     except (ValueError, FileNotFoundError, OSError, ET.ParseError) as error:
         print(f"Ошибка: {error}")
