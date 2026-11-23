@@ -59,7 +59,8 @@ class ConfigEvaluator(Transformer):
 
     def dictionary(self, items):
         """Преобразует словарь в обычный Python-словарь"""
-        return dict(items)
+        pairs = [item for item in items if item is not None]
+        return dict(pairs)
 
 
 def evaluate_text(text):
